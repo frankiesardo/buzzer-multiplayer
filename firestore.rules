@@ -1,0 +1,35 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+  	match /rooms/{roomId} {
+    	allow get
+      allow create: if
+        request.resource.data.keys().hasOnly(['hostId', 'timestamp']) &&
+      	request.resource.data.hostId == request.auth.uid &&
+        request.resource.data.timestamp == request.time
+        
+      match /guests/{guestId} {        
+      	allow read
+        allow create: if
+        	isGuest() && dataIsCorrect()
+          
+        allow update: if
+          (isGuest() || isHost()) && dataIsCorrect()
+        
+        function isGuest() {
+        	return request.auth.uid == guestId
+        }
+        function isHost() {
+        	return request.auth.uid == get(/databases/$(database)/documents/rooms/$(roomId)).data.hostId;
+        }
+        function dataIsCorrect() {
+          return request.resource.data.keys().hasOnly(['buzzed', 'name']) && 
+                 request.resource.data.name is string &&
+                 request.resource.data.name.size() < 100 &&
+          			 (request.resource.data.buzzed == null || 
+                  request.resource.data.buzzed == request.time)
+        }
+      }  
+    }
+  }
+}
