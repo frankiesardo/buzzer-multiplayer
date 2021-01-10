@@ -1,9 +1,4 @@
-import {
-  RecoilRoot,
-  useRecoilValue,
-  useSetRecoilState,
-  useRecoilState,
-} from "recoil";
+import { RecoilRoot, useRecoilValue, useSetRecoilState } from "recoil";
 import React, { useEffect } from "react";
 import AppBar from "@material-ui/core/AppBar";
 import Toolbar from "@material-ui/core/Toolbar";
@@ -26,7 +21,6 @@ import Grid from "@material-ui/core/Grid";
 import CloseIcon from "@material-ui/icons/Close";
 import {
   appReducer,
-  firstEffectView,
   canClearBuzzersView,
   guestWhoBuzzedListView,
   guestWhoDidNotBuzzListView,
@@ -35,7 +29,7 @@ import {
   roomIdView,
   yourNameView,
 } from "./state";
-import { handleEffect, watchBuzzers } from "./effects";
+import { watchBuzzers } from "./effects";
 
 function GuestWhoBuzzedList() {
   const items = useRecoilValue(guestWhoBuzzedListView);
@@ -255,22 +249,8 @@ function Home() {
   );
 }
 
-function useEffectHandler() {
-  const [effect, popEffectsQueue] = useRecoilState(firstEffectView);
-  const dispatch = useSetRecoilState(appReducer);
-
-  useEffect(() => {
-    if (!effect) return;
-    popEffectsQueue();
-    handleEffect(effect, dispatch);
-  }, [popEffectsQueue, effect, dispatch]);
-}
-
 function Navigator() {
-  useEffectHandler();
-
-  const page = useRecoilValue(pageView);
-  switch (page) {
+  switch (useRecoilValue(pageView)) {
     case "home":
       return <Home />;
     case "host":

@@ -1,6 +1,13 @@
+import reducer from "./reducer.js";
+import {
+  logEffect,
+  firestoreEffect,
+  alertEffect,
+  playSoundEffect,
+} from "./effects.js";
 import { atom, selector } from "recoil";
 
-export const initialState = {
+const initialState = {
   db: {
     page: "home",
   },
@@ -10,21 +17,7 @@ export const initialState = {
 export const appAtom = atom({
   key: "appAtom",
   default: initialState,
-});
-
-export const effectsView = selector({
-  key: "effectsView",
-  get: ({ get }) => get(appAtom).effects,
-});
-
-export const firstEffectView = selector({
-  key: "firstEffectView",
-  get: ({ get }) => get(effectsView)[0],
-  set: ({ set }) =>
-    set(appAtom, ({ effects, ...state }) => {
-      const [, ...otherEffects] = effects;
-      return { ...state, effects: otherEffects };
-    }),
+  effects_UNSTABLE: [logEffect, firestoreEffect, alertEffect, playSoundEffect],
 });
 
 export const dbView = selector({
@@ -61,7 +54,7 @@ export const guestWhoBuzzedListView = selector({
   key: "guestWhoBuzzedListView",
   get: ({ get }) =>
     get(guestListView)
-      ?.filter(hasBuzzed)
+      ?.filter((x) => !!x.buzzed)
       .sort((a, b) => a.buzzed - b.buzzed) || [],
 });
 
@@ -69,7 +62,7 @@ export const guestWhoDidNotBuzzListView = selector({
   key: "guestWhoDidNotBuzzListView",
   get: ({ get }) =>
     get(guestListView)
-      ?.filter((x) => !hasBuzzed(x))
+      ?.filter((x) => !x.buzzed)
       .sort((a, b) => a.name.localeCompare(b.name)) || [],
 });
 
@@ -95,90 +88,3 @@ export const appReducer = selector({
       ...reducer(previousValue, action),
     })),
 });
-
-function reducer({ db, effects }, { type, payload }) {
-  switch (type) {
-    case "updateInputRoomId":
-      return { db: { ...db, roomId: payload } };
-    case "updateInputYourName":
-      return { db: { ...db, yourName: payload } };
-    case "backToHome":
-      return { db: { page: "home" } };
-    case "watchBuzzersResult": {
-      const previousBuzz = !!db.guests?.filter(hasBuzzed).length;
-      const currentBuzz = !!payload.filter(hasBuzzed).length;
-      const shouldPlayShound =
-        db.page === "host" && !previousBuzz && currentBuzz;
-      const newEffects = shouldPlayShound
-        ? [...effects, { type: "playSound" }]
-        : effects;
-      return {
-        db: { ...db, guests: payload },
-        effects: newEffects,
-      };
-    }
-    case "clearBuzzers": {
-      const roomId = db.roomId;
-      return {
-        effects: [
-          ...effects,
-          {
-            type: "firestore",
-            payload: { method: "clearBuzzers", params: { roomId } },
-          },
-        ],
-      };
-    }
-    case "buzz": {
-      const { roomId, yourId } = db;
-      return {
-        effects: [
-          ...effects,
-          {
-            type: "firestore",
-            payload: { method: "buzz", params: { roomId, yourId } },
-          },
-          { type: "playSound" },
-        ],
-      };
-    }
-    case "makeRoom":
-      return {
-        effects: [
-          ...effects,
-          {
-            type: "firestore",
-            payload: { method: "makeRoom", callback: "makeRoomResult" },
-          },
-        ],
-      };
-    case "makeRoomResult":
-      return { db: { ...db, roomId: payload.roomId, page: "host" } };
-    case "makeGuest":
-      return {
-        effects: [
-          ...effects,
-          {
-            type: "firestore",
-            payload: {
-              method: "makeGuest",
-              params: { roomId: db.roomId, yourName: db.yourName },
-              callback: "makeGuestResult",
-            },
-          },
-        ],
-      };
-    case "makeGuestResult":
-      return payload.isSuccess
-        ? { db: { ...db, yourId: payload.yourId, page: "join" } }
-        : {
-            effects: [...effects, { type: "alert", payload: payload.message }],
-          };
-    default:
-      throw Error(`Cannot perform action of type ${type}`);
-  }
-}
-
-function hasBuzzed(guest) {
-  return !!guest.buzzed;
-}

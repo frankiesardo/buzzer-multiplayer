@@ -15,7 +15,11 @@ The upside is that if you want to do teams you can all choose the same name and 
 
 ## Local development
 
-Run a local development server with React Fast Refresh: `yarn start`. This also starts a local firebase hosting so you can use the special [reserved urls](https://firebase.google.com/docs/web/setup#from-hosting-urls)
+Run a local development server with React Fast Refresh: `yarn start`.
+
+This also starts a local firebase hosting so you can use the special [reserved urls](https://firebase.google.com/docs/web/setup#from-hosting-urls)
+
+To view the app go to http://localhost:5000 (firebase hosting emulator) rather than http://localhost:3000
 
 ## Deploy it
 

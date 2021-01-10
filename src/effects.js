@@ -1,3 +1,5 @@
+import reducer from "./reducer.js";
+
 const firebase = window.firebase;
 const firestore = firebase.firestore();
 const auth = firebase.auth();
@@ -58,45 +60,6 @@ async function clearBuzzers({ roomId }) {
   return await batch.commit();
 }
 
-export function handleEffect(effect, dispatch) {
-  const { type, payload } = effect;
-  switch (type) {
-    case "firestore":
-      {
-        const { method, params, callback } = payload;
-        let action;
-        switch (method) {
-          case "makeRoom":
-            action = makeRoom(params);
-            break;
-          case "makeGuest":
-            action = makeGuest(params);
-            break;
-          case "buzz":
-            action = buzz(params);
-            break;
-          case "clearBuzzers":
-            action = clearBuzzers(params);
-            break;
-          default:
-            throw Error(`Cannot access firebase method ${method}`);
-        }
-        action.then((result) =>
-          callback ? dispatch({ type: callback, payload: result }) : null
-        );
-      }
-      return;
-    case "playSound":
-      new Audio("/audio/buzzer.mp3").play();
-      return;
-    case "alert":
-      alert(payload);
-      return;
-    default:
-      throw Error(`Cannot execute effect of type ${type}`);
-  }
-}
-
 export function watchBuzzers(roomId, callback) {
   function onSnapshot(guests) {
     callback(
@@ -112,4 +75,100 @@ export function watchBuzzers(roomId, callback) {
     .doc(roomId)
     .collection("guests")
     .onSnapshot(onSnapshot);
+}
+
+export function logEffect({ onSet, setSelf }) {
+  onSet(({ effects }) => {
+    const toExecute = effects.filter((e) => e.type === "log");
+    if (!toExecute.length) {
+      return;
+    }
+
+    setSelf(({ db, effects }) => ({
+      db,
+      effects: effects.filter((e) => e.type !== "log"),
+    }));
+    toExecute.forEach((e) => {
+      console.log(e.payload);
+    });
+  });
+}
+
+export function playSoundEffect({ onSet, setSelf }) {
+  onSet(({ effects }) => {
+    const toExecute = effects.filter((e) => e.type === "playSound");
+    if (!toExecute.length) {
+      return;
+    }
+
+    setSelf(({ db, effects }) => ({
+      db,
+      effects: effects.filter((e) => e.type !== "playSound"),
+    }));
+    toExecute.forEach((e) => {
+      new Audio(e.payload).play();
+    });
+  });
+}
+
+export function alertEffect({ onSet, setSelf }) {
+  onSet(({ effects }) => {
+    const toExecute = effects.filter((e) => e.type === "alert");
+    if (!toExecute.length) {
+      return;
+    }
+
+    setSelf(({ db, effects }) => ({
+      db,
+      effects: effects.filter((e) => e.type !== "alert"),
+    }));
+    toExecute.forEach((e) => {
+      alert(e.payload);
+    });
+  });
+}
+
+export function firestoreEffect({ onSet, setSelf }) {
+  onSet(({ effects }) => {
+    const toExecute = effects.filter((e) => e.type === "firestore");
+    if (!toExecute.length) {
+      return;
+    }
+
+    setSelf(({ db, effects }) => ({
+      db,
+      effects: effects.filter((e) => e.type !== "firestore"),
+    }));
+
+    const dispatch = (action) => {
+      setSelf((previousValue) => ({
+        ...previousValue,
+        ...reducer(previousValue, action),
+      }));
+    };
+
+    toExecute.forEach((e) => {
+      const { method, params, callback } = e.payload;
+      let action;
+      switch (method) {
+        case "makeRoom":
+          action = makeRoom(params);
+          break;
+        case "makeGuest":
+          action = makeGuest(params);
+          break;
+        case "buzz":
+          action = buzz(params);
+          break;
+        case "clearBuzzers":
+          action = clearBuzzers(params);
+          break;
+        default:
+          throw Error(`Cannot execute firestore method ${method}`);
+      }
+      action.then((result) =>
+        callback ? dispatch({ type: callback, payload: result }) : null
+      );
+    });
+  });
 }
