@@ -30,6 +30,13 @@ import {
   yourNameView,
 } from "./state";
 import { watchBuzzers } from "./effects";
+import { motion, AnimateSharedLayout } from "framer-motion";
+
+const spring = {
+  type: "spring",
+  stiffness: 500,
+  damping: 30,
+};
 
 function GuestWhoBuzzedList() {
   const items = useRecoilValue(guestWhoBuzzedListView);
@@ -40,12 +47,16 @@ function GuestWhoBuzzedList() {
       {!items.length
         ? null
         : items.map(({ id, name, buzzed }, idx) => (
-            <ListItem key={id}>
-              <ListItemText
-                primary={name}
-                secondary={idx > 0 ? `+${buzzed - items[0].buzzed}  ms` : null}
-              />
-            </ListItem>
+            <motion.div key={id} layoutId={id} transition={spring}>
+              <ListItem>
+                <ListItemText
+                  primary={name}
+                  secondary={
+                    idx > 0 ? `+${buzzed - items[0].buzzed}  ms` : null
+                  }
+                />
+              </ListItem>
+            </motion.div>
           ))}
     </List>
   );
@@ -59,10 +70,15 @@ function GuestWhoDidNotBuzzList() {
       <Divider />
       {!items.length
         ? null
-        : items.map(({ id, name }) => (
-            <ListItem key={id}>
-              <ListItemText primary={name} />
-            </ListItem>
+        : items.map(({ id, name, points }) => (
+            <motion.div key={id} layoutId={id} transition={spring}>
+              <ListItem>
+                <ListItemText
+                  primary={name}
+                  secondary={points > 0 ? `${points} pts` : null}
+                />
+              </ListItem>
+            </motion.div>
           ))}
     </List>
   );
@@ -70,14 +86,16 @@ function GuestWhoDidNotBuzzList() {
 
 function GuestList() {
   return (
-    <Grid container spacing={2}>
-      <Grid item xs={6}>
-        <GuestWhoBuzzedList />
+    <AnimateSharedLayout>
+      <Grid container spacing={2}>
+        <Grid item xs={6}>
+          <GuestWhoBuzzedList />
+        </Grid>
+        <Grid item xs={6}>
+          <GuestWhoDidNotBuzzList />
+        </Grid>
       </Grid>
-      <Grid item xs={6}>
-        <GuestWhoDidNotBuzzList />
-      </Grid>
-    </Grid>
+    </AnimateSharedLayout>
   );
 }
 
