@@ -32,32 +32,27 @@ import {
 import { watchBuzzers } from "./effects";
 import { motion, AnimateSharedLayout } from "framer-motion";
 
-const spring = {
-  type: "spring",
-  stiffness: 500,
-  damping: 30,
-};
+const spring = { type: "spring", stiffness: 500, damping: 30 };
+const flex = { display: "flex", flexDirection: "column", flex: "auto" };
 
 function GuestWhoBuzzedList() {
   const items = useRecoilValue(guestWhoBuzzedListView);
   return (
-    <List>
+    <List style={flex}>
       <ListSubheader>Buzzed</ListSubheader>
       <Divider />
-      {!items.length
-        ? null
-        : items.map(({ id, name, buzzed }, idx) => (
-            <motion.div key={id} layoutId={id} transition={spring}>
-              <ListItem>
-                <ListItemText
-                  primary={name}
-                  secondary={
-                    idx > 0 ? `+${buzzed - items[0].buzzed}  ms` : null
-                  }
-                />
-              </ListItem>
-            </motion.div>
-          ))}
+      <Box style={{ flex: "auto", height: "0px", overflowY: "auto" }}>
+        {items?.map(({ id, name, buzzed }, idx) => (
+          <motion.div key={id} layoutId={id} transition={spring}>
+            <ListItem>
+              <ListItemText
+                primary={name}
+                secondary={idx > 0 ? `+${buzzed - items[0].buzzed}  ms` : null}
+              />
+            </ListItem>
+          </motion.div>
+        ))}
+      </Box>
     </List>
   );
 }
@@ -65,21 +60,21 @@ function GuestWhoBuzzedList() {
 function GuestWhoDidNotBuzzList() {
   const items = useRecoilValue(guestWhoDidNotBuzzListView);
   return (
-    <List>
+    <List style={flex}>
       <ListSubheader>Not buzzed yet</ListSubheader>
       <Divider />
-      {!items.length
-        ? null
-        : items.map(({ id, name, points }) => (
-            <motion.div key={id} layoutId={id} transition={spring}>
-              <ListItem>
-                <ListItemText
-                  primary={name}
-                  secondary={points > 0 ? `${points} pts` : null}
-                />
-              </ListItem>
-            </motion.div>
-          ))}
+      <Box style={{ flex: "auto", height: "0px", overflowY: "auto" }}>
+        {items?.map(({ id, name, points }) => (
+          <motion.div key={id} layoutId={id} transition={spring}>
+            <ListItem>
+              <ListItemText
+                primary={name}
+                secondary={points > 0 ? `${points} pts` : null}
+              />
+            </ListItem>
+          </motion.div>
+        ))}
+      </Box>
     </List>
   );
 }
@@ -87,11 +82,11 @@ function GuestWhoDidNotBuzzList() {
 function GuestList() {
   return (
     <AnimateSharedLayout>
-      <Grid container spacing={2}>
-        <Grid item xs={6}>
+      <Grid container spacing={2} style={{ ...flex, flexDirection: "row" }}>
+        <Grid item xs={6} style={flex}>
           <GuestWhoBuzzedList />
         </Grid>
-        <Grid item xs={6}>
+        <Grid item xs={6} style={flex}>
           <GuestWhoDidNotBuzzList />
         </Grid>
       </Grid>
@@ -123,7 +118,7 @@ function Join() {
   const buzz = () => dispatch({ type: "buzz" });
 
   return (
-    <>
+    <Box style={flex}>
       <AppBar position="static">
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={exit}>
@@ -132,10 +127,10 @@ function Join() {
           <Typography variant="h6">Room number: {roomId}</Typography>
         </Toolbar>
       </AppBar>
-      <Box p={2}>
+      <Box p={2} style={flex}>
         <Typography variant="subtitle2">You are {yourName}</Typography>
         <Box p={2} />
-        <Box display="flex" flexDirection="row" justifyContent="center">
+        <Box display="flex" justifyContent="center">
           <Fab
             color="secondary"
             style={{ width: 187, height: 187 }}
@@ -148,7 +143,7 @@ function Join() {
         <Box p={4} />
         <GuestList />
       </Box>
-    </>
+    </Box>
   );
 }
 
@@ -163,7 +158,7 @@ function Host() {
   const clearBuzzers = () => dispatch({ type: "clearBuzzers" });
 
   return (
-    <>
+    <Box style={flex}>
       <AppBar position="static">
         <Toolbar>
           <IconButton edge="start" color="inherit" onClick={exit}>
@@ -172,10 +167,10 @@ function Host() {
           <Typography variant="h6">Room number: {roomId}</Typography>
         </Toolbar>
       </AppBar>
-      <Box p={2}>
+      <Box p={2} style={flex}>
         <Typography variant="subtitle2">You are the host</Typography>
         <Box p={2} />
-        <Box display="flex" flexDirection="row" justifyContent="center">
+        <Box display="flex" justifyContent="center">
           <Button
             variant="contained"
             color="secondary"
@@ -188,7 +183,7 @@ function Host() {
         <Box p={4} />
         <GuestList />
       </Box>
-    </>
+    </Box>
   );
 }
 
@@ -283,15 +278,15 @@ function Navigator() {
 function App() {
   return (
     <RecoilRoot>
-      <div style={{ backgroundColor: "#eeeeee" }}>
+      <Box style={{ backgroundColor: "gainsboro" }}>
         <Container
           disableGutters
           maxWidth="sm"
-          style={{ height: "100vh", backgroundColor: "white" }}
+          style={{ ...flex, backgroundColor: "white", height: "100vh" }}
         >
           <Navigator />
         </Container>
-      </div>
+      </Box>
     </RecoilRoot>
   );
 }
