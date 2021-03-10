@@ -34,6 +34,12 @@ import { motion, AnimateSharedLayout } from "framer-motion";
 
 const spring = { type: "spring", stiffness: 500, damping: 30 };
 const flex = { display: "flex", flexDirection: "column", flex: "auto" };
+const stretch = {
+  flex: "auto",
+  height: "0px",
+  overflowY: "auto",
+  overflowX: "hidden",
+};
 
 function GuestWhoBuzzedList() {
   const items = useRecoilValue(guestWhoBuzzedListView);
@@ -41,7 +47,7 @@ function GuestWhoBuzzedList() {
     <List style={flex}>
       <ListSubheader>Buzzed</ListSubheader>
       <Divider />
-      <Box style={{ flex: "auto", height: "0px", overflowY: "auto" }}>
+      <Box style={stretch}>
         {items?.map(({ id, name, buzzed }, idx) => (
           <motion.div key={id} layoutId={id} transition={spring}>
             <ListItem>
@@ -63,7 +69,7 @@ function GuestWhoDidNotBuzzList() {
     <List style={flex}>
       <ListSubheader>Not buzzed yet</ListSubheader>
       <Divider />
-      <Box style={{ flex: "auto", height: "0px", overflowY: "auto" }}>
+      <Box style={stretch}>
         {items?.map(({ id, name, points }) => (
           <motion.div key={id} layoutId={id} transition={spring}>
             <ListItem>
@@ -282,7 +288,11 @@ function App() {
         <Container
           disableGutters
           maxWidth="sm"
-          style={{ ...flex, backgroundColor: "white", height: "100vh" }}
+          style={{
+            ...flex,
+            backgroundColor: "white",
+            height: window.innerHeight,
+          }}
         >
           <Navigator />
         </Container>
