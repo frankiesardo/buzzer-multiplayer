@@ -23,9 +23,10 @@ service cloud.firestore {
         	return request.auth.uid == get(/databases/$(database)/documents/rooms/$(roomId)).data.hostId;
         }
         function dataIsCorrect() {
-          return request.resource.data.keys().hasOnly(['buzzed', 'name']) && 
+          return request.resource.data.keys().hasOnly(['buzzed', 'name', 'score']) && 
                  request.resource.data.name is string &&
                  request.resource.data.name.size() < 100 &&
+                 request.resource.data.score is number &&
           			 (request.resource.data.buzzed == null || 
                   request.resource.data.buzzed == request.time)
         }

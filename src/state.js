@@ -1,23 +1,26 @@
-import reducer from "./reducer.js";
+import reducer from "./reducer";
 import {
-  logEffect,
   firestoreEffect,
-  alertEffect,
+  urlEffect,
   playSoundEffect,
-} from "./effects.js";
+  shareEffect,
+} from "./effects";
 import { atom, selector } from "recoil";
+import { matchPath } from "react-router";
+
+const initialPath = matchPath(window.location.hash, {
+  path: "#/:action/:roomId",
+});
 
 const initialState = {
-  db: {
-    page: "home",
-  },
+  db: { roomId: initialPath ? initialPath.params.roomId : undefined },
   effects: [],
 };
 
 export const appAtom = atom({
   key: "appAtom",
   default: initialState,
-  effects_UNSTABLE: [logEffect, firestoreEffect, alertEffect, playSoundEffect],
+  effects_UNSTABLE: [firestoreEffect, urlEffect, playSoundEffect, shareEffect],
 });
 
 export const dbView = selector({
@@ -25,29 +28,42 @@ export const dbView = selector({
   get: ({ get }) => get(appAtom).db,
 });
 
-export const pageView = selector({
-  key: "pageView",
-  get: ({ get }) => get(dbView).page,
-});
-
 export const roomIdView = selector({
   key: "roomIdView",
   get: ({ get }) => get(dbView).roomId,
 });
 
-export const yourNameView = selector({
-  key: "yourNameView",
-  get: ({ get }) => get(dbView).yourName,
+export const userIdView = selector({
+  key: "userIdView",
+  get: ({ get }) => get(dbView).userId,
 });
 
-export const yourIdView = selector({
-  key: "yourIdView",
-  get: ({ get }) => get(dbView).yourId,
+export const userTypeView = selector({
+  key: "userTypeView",
+  get: ({ get }) => get(dbView).userType,
 });
 
 export const guestListView = selector({
   key: "guestListView",
-  get: ({ get }) => get(dbView).guests,
+  get: ({ get }) => get(dbView).guestList,
+});
+
+export const guestInfoView = selector({
+  key: "guestInfoView",
+  get: ({ get }) => {
+    const userId = get(userIdView);
+    return get(guestListView)?.find((x) => x.id === userId);
+  },
+});
+
+export const hostInfoView = selector({
+  key: "hostInfoView",
+  get: ({ get }) => ({ canClear: !!get(guestWhoBuzzedListView).length }),
+});
+
+export const errorView = selector({
+  key: "errorView",
+  get: ({ get }) => get(dbView).error,
 });
 
 export const guestWhoBuzzedListView = selector({
@@ -58,24 +74,33 @@ export const guestWhoBuzzedListView = selector({
       .sort((a, b) => a.buzzed - b.buzzed) || [],
 });
 
-export const guestWhoDidNotBuzzListView = selector({
+export const guestWhoDidNotBuzzListview = selector({
   key: "guestWhoDidNotBuzzListView",
   get: ({ get }) =>
     get(guestListView)
       ?.filter((x) => !x.buzzed)
-      .sort((a, b) => a.name.localeCompare(b.name)) || [],
+      .sort((a, b) => {
+        if (a.score > b.score) return -1;
+        if (a.score < b.score) return 1;
+        return a.name.localeCompare(b.name);
+      }) || [],
 });
 
-export const canClearBuzzersView = selector({
-  key: "canClearBuzzersView",
-  get: ({ get }) => !!get(guestWhoBuzzedListView).length,
+export const dialogOpenView = selector({
+  key: "dialogOpenView",
+  get: ({ get }) => get(dbView).dialog?.open ?? false,
 });
 
-export const hasBuzzedView = selector({
-  key: "hasBuzzedView",
+export const dialogIdxView = selector({
+  key: "dialogIdxView",
+  get: ({ get }) => get(dbView).dialog?.idx,
+});
+
+export const editGuestView = selector({
+  key: "editGuestView",
   get: ({ get }) => {
-    const yourId = get(yourIdView);
-    return !!get(guestWhoBuzzedListView).find((x) => x.id === yourId);
+    const idx = get(dialogIdxView);
+    return get(guestListView)?.find((x) => x.id === idx);
   },
 });
 
