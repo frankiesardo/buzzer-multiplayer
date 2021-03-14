@@ -1,5 +1,4 @@
 export default function reducer({ db, effects }, { type, payload }) {
-  console.log({ db, type, payload });
   switch (type) {
     case "setupGuest": {
       const { roomId } = db;
